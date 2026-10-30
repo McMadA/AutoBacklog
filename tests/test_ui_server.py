@@ -12,12 +12,12 @@ class TestUIServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = AutoBacklogConfig(project_name="UnitTestProject")
-        cls.port = find_free_port(8990)
         ui_server._GLOBAL_STATE = RunnerState(cls.config)
-        cls.httpd = ThreadingHTTPServer(("127.0.0.1", cls.port), AutoBacklogHandler)
+        # Bind to port 0 so the OS assigns a guaranteed free ephemeral port
+        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), AutoBacklogHandler)
+        cls.port = cls.httpd.server_address[1]
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
         cls.thread.start()
-        time.sleep(0.3)
 
     @classmethod
     def tearDownClass(cls):

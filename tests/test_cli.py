@@ -4,7 +4,15 @@ import sys
 import tempfile
 import unittest
 
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 class TestCLI(unittest.TestCase):
+    def setUp(self):
+        self.env = dict(os.environ)
+        # Ensure repo root is always in PYTHONPATH for subprocesses
+        existing_pp = self.env.get("PYTHONPATH", "")
+        self.env["PYTHONPATH"] = f"{REPO_ROOT}{os.pathsep}{existing_pp}" if existing_pp else REPO_ROOT
+
     def test_cli_version(self):
         res = subprocess.run(
             [sys.executable, "-m", "autobacklog", "--version"],
@@ -12,6 +20,7 @@ class TestCLI(unittest.TestCase):
             text=True,
             encoding="utf-8",
             errors="replace",
+            env=self.env,
         )
         self.assertEqual(res.returncode, 0)
         self.assertIn("autobacklog 0.1.0", res.stdout)
@@ -26,6 +35,7 @@ class TestCLI(unittest.TestCase):
                 text=True,
                 encoding="utf-8",
                 errors="replace",
+                env=self.env,
             )
             self.assertEqual(res.returncode, 0)
             config_file = os.path.join(tmpdir, "autobacklog.yaml")
@@ -46,6 +56,7 @@ class TestCLI(unittest.TestCase):
                 text=True,
                 encoding="utf-8",
                 errors="replace",
+                env=self.env,
             )
             self.assertEqual(res_dry.returncode, 0)
             self.assertIn("First Test Task", res_dry.stdout)
