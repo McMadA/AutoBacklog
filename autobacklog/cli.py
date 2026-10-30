@@ -6,6 +6,14 @@ import argparse
 import os
 import sys
 
+# Ensure UTF-8 output on Windows terminals to prevent cp1252 charmap errors
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from autobacklog import __version__
 from autobacklog.adapters import get_backlog_adapter
 from autobacklog.config import generate_template_config, load_config
