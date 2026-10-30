@@ -85,7 +85,24 @@ cd AutoBacklog
 pip install -e .
 ```
 
-### 2. Initialize in your Repository
+### 2. Launch the Web UI (For "CLI Noobs" & Visual Users) 🌐
+
+Don't want to fiddle with command lines or YAML files? Simply start the built-in local web dashboard:
+
+```bash
+autobacklog ui
+# or: autobacklog web
+```
+
+This immediately opens `http://localhost:8080` in your browser where you can:
+* Configure your Azure DevOps, GitHub, or Markdown backlog visually.
+* See open tasks, priorities, and AI model tiering.
+* Click **"▶️ Start Runner"** or run specific tasks with 1 tap.
+* Watch the live console stream in real-time.
+
+---
+
+### 3. Initialize via CLI (Alternative)
 
 Navigate to your target project folder and run:
 
@@ -129,7 +146,8 @@ autobacklog run --id 186
 
 | Command | Description |
 |---|---|
-| `autobacklog run` | Starts the continuous execution loop. |
+| `autobacklog ui` / `web` | Launches the local Web UI dashboard in your browser. |
+| `autobacklog run` | Starts the continuous execution loop via terminal. |
 | `autobacklog run --id <N>` | Runs a specific work item ID and exits. |
 | `autobacklog run --provider <auto\|agy\|claude>` | Overrides the active AI CLI provider. |
 | `autobacklog dry-run` | Previews open tasks and quota status without running AI. |

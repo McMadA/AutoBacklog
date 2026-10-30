@@ -106,6 +106,20 @@ def main():
         "clear-quota", help="Wis de actieve rate-limit / model quota cache"
     )
 
+    # 7. UI / WEB INTERFACE
+    ui_parser = subparsers.add_parser(
+        "ui", aliases=["web"], help="Start de lokale webinterface in de browser (voor CLI noobs)"
+    )
+    ui_parser.add_argument(
+        "--port", type=int, default=8080, help="Poort voor de webserver (standaard: 8080)"
+    )
+    ui_parser.add_argument(
+        "--no-browser", action="store_true", help="Open browser niet automatisch"
+    )
+    ui_parser.add_argument(
+        "--config", type=str, default=None, help="Pad naar autobacklog.yaml"
+    )
+
     args = parser.parse_args()
 
     # Default to 'run' if no subcommand provided
@@ -115,6 +129,12 @@ def main():
         runner = BacklogRunner(cfg)
         runner.run()
         return
+
+    if args.command in ("ui", "web"):
+        from autobacklog.ui import start_web_ui
+        cfg = load_config(args.config)
+        start_web_ui(config=cfg, port=args.port, open_browser=not args.no_browser)
+        sys.exit(0)
 
     if args.command == "init":
         target = os.path.join(os.getcwd(), "autobacklog.yaml")

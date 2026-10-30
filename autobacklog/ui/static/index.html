@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoBacklog • Web UI</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --surface: #141b26;
+      --surface-border: #232d3f;
+      --surface-hover: #1b2434;
+      --text: #f0f4f8;
+      --text-muted: #8b9bb4;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --large-tag: #8b5cf6;
+      --small-tag: #06b6d4;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Top Nav */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.25rem; }
+    .brand-badge {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+    /* Buttons */
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover { background: var(--surface-hover); border-color: #3b475c; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-success { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: var(--success); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Tabs */
+    .tabs-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 0 24px;
+      display: flex;
+      gap: 20px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 12px 4px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+    }
+    .tab-btn.active { color: var(--text); }
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    /* Content Area */
+    main { padding: 24px; max-width: 1300px; margin: 0 auto; width: 100%; flex: 1; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .metric-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .metric-val { font-size: 1.8rem; font-weight: 700; color: var(--text); }
+    .metric-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+    /* Active Task Banner */
+    .active-banner {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+      margin-right: 8px;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Log Console */
+    .console-box {
+      background: #06090e;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85rem;
+      height: 380px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+    .log-line { margin-bottom: 4px; word-break: break-all; }
+    .log-time { color: #52637a; margin-right: 8px; }
+
+    /* Backlog Cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+    }
+    .task-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .task-card:hover { border-color: #3b475c; transform: translateY(-2px); }
+    .task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .badge-tier-large { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .badge-tier-small { background: rgba(6, 182, 212, 0.2); color: #a5f3fc; border: 1px solid rgba(6, 182, 212, 0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .task-title { font-size: 1rem; font-weight: 600; margin-bottom: 8px; color: #fff; }
+    .task-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; max-height: 60px; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Form */
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    .form-input, .form-select {
+      width: 100%;
+      background: #0e141e;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>🚀 AutoBacklog</span>
+      <span class="brand-badge" id="projectNameBadge">Laden...</span>
+    </div>
+    <div class="nav-actions">
+      <span id="runnerStatePill" style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">
+        <span class="pulse-dot" id="runnerDot" style="background: var(--text-muted); box-shadow: none;"></span>
+        <span id="runnerStateText">Inactief</span>
+      </span>
+      <button class="btn btn-primary" id="btnStartRun" onclick="triggerRun()">▶️ Start Runner</button>
+      <button class="btn btn-danger" id="btnStopRun" onclick="triggerStop()" style="display: none;">⏹️ Pauzeer</button>
+      <button class="btn" onclick="clearQuotaCache()">🧹 Wis Quota</button>
+    </div>
+  </header>
+
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('backlog')">📋 Backlog Taken</button>
+    <button class="tab-btn" onclick="switchTab('settings')">⚙️ Instellingen</button>
+    <button class="tab-btn" onclick="switchTab('completed')">✅ Voltooid</button>
+  </div>
+
+  <main>
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-pane active">
+      <div id="activeBanner" class="active-banner" style="display: none;">
+        <div>
+          <div style="font-size: 0.8rem; color: #93c5fd; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">
+            <span class="pulse-dot"></span> Actieve Ronde Wordt Uitgevoerd
+          </div>
+          <h2 id="activeTaskTitle" style="font-size: 1.15rem; color: #fff;">Taak Titel</h2>
+          <div id="activeTaskMeta" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Model: ...</div>
+        </div>
+        <button class="btn btn-danger" onclick="triggerStop()">Stop</button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-title">Open Taken</div>
+          <div class="metric-val" id="metricOpenTasks">-</div>
+          <div class="metric-sub">Klaar voor uitvoering</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Voltooid in Sessie</div>
+          <div class="metric-val" id="metricCompleted" style="color: var(--success);">-</div>
+          <div class="metric-sub">Succesvol gecommit</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Actieve Quota Locks</div>
+          <div class="metric-val" id="metricQuotaLocks" style="color: var(--warning);">-</div>
+          <div class="metric-sub" id="metricQuotaSub">Geen rate-limits</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 1.1rem; font-weight: 600;">📜 Live Uitvoeringslog</h3>
+        <button class="btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="refreshLogs()">Verversen</button>
+      </div>
+      <div class="console-box" id="consoleBox">
+        <div class="log-line"><span class="log-time">[00:00:00]</span> Verbonden met AutoBacklog Web Server...</div>
+      </div>
+    </div>
+
+    <!-- TAB 2: BACKLOG -->
+    <div id="tab-backlog" class="tab-pane">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <h2 style="font-size: 1.3rem;">Openstaande Backlog Taken</h2>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">Klik op een taak om deze specifiek uit te voeren met het aanbevolen model.</p>
+        </div>
+        <button class="btn btn-primary" onclick="loadBacklog()">🔄 Vernieuwen</button>
+      </div>
+      <div class="cards-grid" id="backlogGrid">
+        <div style="color: var(--text-muted);">Taken ophalen...</div>
+      </div>
+    </div>
+
+    <!-- TAB 3: INSTELLINGEN -->
+    <div id="tab-settings" class="tab-pane">
+      <div style="max-width: 760px; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 24px;">
+        <h2 style="font-size: 1.3rem; margin-bottom: 20px;">⚙️ Project & AI Configuratie</h2>
+        
+        <div class="form-group">
+          <label class="form-label">Projectnaam</label>
+          <input type="text" id="cfgProjectName" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Backlog Bron Type</label>
+          <select id="cfgBacklogType" class="form-select" onchange="toggleBacklogInputs()">
+            <option value="azure_boards">Azure DevOps Boards</option>
+            <option value="github_issues">GitHub Issues</option>
+            <option value="markdown">Lokaal Markdown Bestand (PLAN.md)</option>
+          </select>
+        </div>
+
+        <div id="sectionAzure">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Azure Org URL</label>
+              <input type="text" id="cfgAzureOrg" class="form-input" placeholder="https://dev.azure.com/jouw-organisatie">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Projectnaam</label>
+              <input type="text" id="cfgAzureProj" class="form-input" placeholder="MijnProject">
+            </div>
+          </div>
+        </div>
+
+        <div id="sectionGitHub" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">GitHub Repository</label>
+            <input type="text" id="cfgGhRepo" class="form-input" placeholder="eigenaar/repo (bijv. allardv03/Thoughts)">
+          </div>
+        </div>
+
+        <div id="sectionMarkdown" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Pad naar Markdown Plan</label>
+            <input type="text" id="cfgMdPath" class="form-input" placeholder="docs/PLAN.md of BACKLOG.md">
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--surface-border); margin: 24px 0;">
+
+        <div class="form-group">
+          <label class="form-label">AI CLI Provider</label>
+          <select id="cfgProviderType" class="form-select">
+            <option value="auto">Automatisch detecteren</option>
+            <option value="agy">Google Antigravity (agy.exe)</option>
+            <option value="claude">Anthropic Claude Code (claude)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Model voor Grote Taken (Optioneel)</label>
+            <input type="text" id="cfgLargeModel" class="form-input" placeholder="Standaard (gemini-4 / claude-3-7-sonnet)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Model voor Kleine Taken (Optioneel)</label>
+            <input type="text" id="cfgSmallModel" class="form-input" placeholder="Standaard (flash-3.8 / claude-3-5-haiku)">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveSettings()" style="margin-top: 10px;">💾 Instellingen Opslaan</button>
+      </div>
+    </div>
+
+    <!-- TAB 4: COMPLETED -->
+    <div id="tab-completed" class="tab-pane">
+      <h2 style="font-size: 1.3rem; margin-bottom: 20px;">✅ Voltooide Taken in deze Sessie</h2>
+      <div id="completedList" style="background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 16px;">
+        <div style="color: var(--text-muted);">Nog geen taken voltooid in deze sessie.</div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast">Instellingen opgeslagen</div>
+
+  <script>
+    let pollInterval = null;
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+      if (name === 'backlog') loadBacklog();
+      if (name === 'settings') loadSettings();
+    }
+
+    function toggleBacklogInputs() {
+      const type = document.getElementById('cfgBacklogType').value;
+      document.getElementById('sectionAzure').style.display = (type === 'azure_boards') ? 'block' : 'none';
+      document.getElementById('sectionGitHub').style.display = (type === 'github_issues') ? 'block' : 'none';
+      document.getElementById('sectionMarkdown').style.display = (type === 'markdown') ? 'block' : 'none';
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        
+        document.getElementById('projectNameBadge').innerText = data.project_name || 'Project';
+        document.getElementById('metricCompleted').innerText = data.completed_count || 0;
+
+        // Quota
+        const qKeys = Object.keys(data.quota || {});
+        document.getElementById('metricQuotaLocks').innerText = qKeys.length;
+        if (qKeys.length > 0) {
+          const list = qKeys.map(k => `${k} (${data.quota[k].remaining_str})`).join(', ');
+          document.getElementById('metricQuotaSub').innerText = list;
+        } else {
+          document.getElementById('metricQuotaSub').innerText = 'Alle modellen operationeel';
+        }
+
+        // Active State
+        const pill = document.getElementById('runnerStateText');
+        const dot = document.getElementById('runnerDot');
+        const btnStart = document.getElementById('btnStartRun');
+        const btnStop = document.getElementById('btnStopRun');
+        const banner = document.getElementById('activeBanner');
+
+        if (data.running) {
+          pill.innerText = 'Actief';
+          pill.style.color = 'var(--success)';
+          dot.style.background = 'var(--success)';
+          dot.style.boxShadow = '0 0 10px var(--success)';
+          btnStart.style.display = 'none';
+          btnStop.style.display = 'inline-flex';
+
+          if (data.active_task) {
+            banner.style.display = 'flex';
+            document.getElementById('activeTaskTitle').innerText = `[#${data.active_task.id}] ${data.active_task.title}`;
+            document.getElementById('activeTaskMeta').innerText = `Model: ${data.active_task.model} (${data.active_task.tier})`;
+          }
+        } else {
+          pill.innerText = 'Inactief';
+          pill.style.color = 'var(--text-muted)';
+          dot.style.background = 'var(--text-muted)';
+          dot.style.boxShadow = 'none';
+          btnStart.style.display = 'inline-flex';
+          btnStop.style.display = 'none';
+          banner.style.display = 'none';
+        }
+
+        // Completed List
+        if (data.completed_tasks && data.completed_tasks.length > 0) {
+          let html = '<table style="width:100%; border-collapse: collapse; font-size: 0.9rem;">';
+          html += '<tr style="border-bottom: 1px solid var(--surface-border); text-align: left; color: var(--text-muted);">';
+          html += '<th style="padding: 8px;">ID</th><th>Titel</th><th>Model</th><th>Looptijd</th><th>Commit</th></tr>';
+          for (const t of data.completed_tasks.slice().reverse()) {
+            html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 10px 8px; font-weight:700;">#${t.id}</td>
+              <td>${t.title}</td>
+              <td><code>${t.model}</code></td>
+              <td>${t.duration}</td>
+              <td><code>${t.commit}</code></td>
+            </tr>`;
+          }
+          html += '</table>';
+          document.getElementById('completedList').innerHTML = html;
+        }
+
+      } catch (e) {
+        console.error("Fout bij ophalen status", e);
+      }
+    }
+
+    async function refreshLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        if (data.logs) {
+          const box = document.getElementById('consoleBox');
+          box.innerHTML = data.logs.map(l => `<div class="log-line"><span class="log-time">[${l.time}]</span> ${escapeHtml(l.text)}</div>`).join('');
+          box.scrollTop = box.scrollHeight;
+        }
+      } catch (e) {}
+    }
+
+    async function loadBacklog() {
+      const grid = document.getElementById('backlogGrid');
+      grid.innerHTML = '<div style="color:var(--text-muted);">Laden...</div>';
+      try {
+        const res = await fetch('/api/backlog');
+        const data = await res.json();
+        if (data.ok && data.items) {
+          document.getElementById('metricOpenTasks').innerText = data.items.length;
+          if (data.items.length === 0) {
+            grid.innerHTML = '<div style="color:var(--text-muted);">🎉 Geen openstaande taken gevonden!</div>';
+            return;
+          }
+          grid.innerHTML = data.items.map(it => {
+            const badgeClass = it.tier === 'LARGE' ? 'badge-tier-large' : 'badge-tier-small';
+            return `
+              <div class="task-card">
+                <div>
+                  <div class="task-header">
+                    <span style="font-weight:700; color: var(--text-muted);">#${it.id}</span>
+                    <span class="${badgeClass}">${it.tier === 'LARGE' ? '🔥 GROOT' : '⚡ KLEIN'}</span>
+                  </div>
+                  <div class="task-title">${escapeHtml(it.title)}</div>
+                  <div class="task-desc">${escapeHtml(it.description || 'Geen beschrijving')}</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(it.type || 'Taak')}</span>
+                  <button class="btn btn-primary" style="padding: 5px 12px; font-size: 0.8rem;" onclick="triggerRun(${it.id})">▶️ Uitvoeren</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          grid.innerHTML = `<div style="color:var(--danger);">Fout bij laden: ${data.error || 'Onbekend'}</div>`;
+        }
+      } catch (e) {
+        grid.innerHTML = `<div style="color:var(--danger);">Kon backlog niet bereiken.</div>`;
+      }
+    }
+
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/config');
+        const cfg = await res.json();
+        document.getElementById('cfgProjectName').value = cfg.project_name || '';
+        document.getElementById('cfgBacklogType').value = cfg.backlog.type || 'azure_boards';
+        document.getElementById('cfgAzureOrg').value = cfg.backlog.org_url || '';
+        document.getElementById('cfgAzureProj').value = cfg.backlog.project || '';
+        document.getElementById('cfgGhRepo').value = cfg.backlog.repo || '';
+        document.getElementById('cfgMdPath').value = cfg.backlog.file_path || '';
+        document.getElementById('cfgProviderType').value = cfg.provider.type || 'auto';
+        document.getElementById('cfgLargeModel').value = cfg.provider.large_model || '';
+        document.getElementById('cfgSmallModel').value = cfg.provider.small_model || '';
+        toggleBacklogInputs();
+      } catch (e) {}
+    }
+
+    async function saveSettings() {
+      const payload = {
+        project_name: document.getElementById('cfgProjectName').value,
+        backlog: {
+          type: document.getElementById('cfgBacklogType').value,
+          org_url: document.getElementById('cfgAzureOrg').value,
+          project: document.getElementById('cfgAzureProj').value,
+          repo: document.getElementById('cfgGhRepo').value,
+          file_path: document.getElementById('cfgMdPath').value,
+        },
+        provider: {
+          type: document.getElementById('cfgProviderType').value,
+          large_model: document.getElementById('cfgLargeModel').value || null,
+          small_model: document.getElementById('cfgSmallModel').value || null,
+        }
+      };
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast('✅ Instellingen succesvol opgeslagen');
+          fetchStatus();
+        } else {
+          alert('Fout: ' + data.message);
+        }
+      } catch (e) {
+        alert('Kon niet opslaan');
+      }
+    }
+
+    async function triggerRun(id = null) {
+      try {
+        const res = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast(id ? `▶️ Taak #${id} gestart` : '▶️ Autonome loop gestart');
+          fetchStatus();
+          refreshLogs();
+        } else {
+          alert('Kon niet starten: ' + data.message);
+        }
+      } catch (e) {
+        alert('Verbindingsfout');
+      }
+    }
+
+    async function triggerStop() {
+      try {
+        const res = await fetch('/api/stop', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          showToast('⏹️ Pauzeer-commando verstuurd');
+          fetchStatus();
+        }
+      } catch (e) {}
+    }
+
+    async function clearQuotaCache() {
+      try {
+        const res = await fetch('/api/clear-quota', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          showToast('🧹 Quota cache gewist');
+          fetchStatus();
+        }
+      } catch (e) {}
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Startup
+    fetchStatus();
+    refreshLogs();
+    pollInterval = setInterval(() => {
+      fetchStatus();
+      refreshLogs();
+    }, 2500);
+  </script>
+</body>
+</html>

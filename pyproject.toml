@@ -40,3 +40,6 @@ autobacklog = "autobacklog.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["autobacklog*"]
+
+[tool.setuptools.package-data]
+"autobacklog.ui" = ["static/*", "static/**/*"]
