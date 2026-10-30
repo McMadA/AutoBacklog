@@ -13,6 +13,7 @@ build/
 _snapshots/
 *.log
 RUN_SUMMARY.md
+autobacklog.yaml
 .coverage
 htmlcov/
 .pytest_cache/
