@@ -13,6 +13,19 @@ class SmartConsoleStreamer:
         self.last_clean_line = ""
         self.repeat_count = 0
 
+    @staticmethod
+    def _safe_write(text: str):
+        try:
+            sys.stdout.write(text)
+            sys.stdout.flush()
+        except UnicodeEncodeError:
+            try:
+                sys.stdout.buffer.write(text.encode("utf-8", errors="replace"))
+                sys.stdout.buffer.flush()
+            except Exception:
+                sys.stdout.write(text.encode("ascii", errors="replace").decode("ascii"))
+                sys.stdout.flush()
+
     def process_line(self, raw_line: str):
         if not raw_line:
             return
@@ -36,15 +49,14 @@ class SmartConsoleStreamer:
 
         if is_polling and line == self.last_clean_line:
             self.repeat_count += 1
-            sys.stdout.write(f"\r⏳ {line} [x{self.repeat_count}]")
-            sys.stdout.flush()
+            self._safe_write(f"\r⏳ {line} [x{self.repeat_count}]")
             return
         elif self.repeat_count > 0 and is_polling:
-            sys.stdout.write("\n")
+            self._safe_write("\n")
             self.repeat_count = 0
 
         self.last_clean_line = line
-        print(line)
+        self._safe_write(line + "\n")
 
         if self.log_file:
             try:

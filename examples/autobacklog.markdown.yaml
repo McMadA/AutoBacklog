@@ -6,7 +6,7 @@ cooldown_seconds: 5
 
 backlog:
   type: "markdown"
-  file_path: "docs/PLAN.md" # or "BACKLOG.md"
+  file_path: "examples/SAMPLE_BACKLOG.md"
   execution_order: []
   non_executable_ids: []
 
