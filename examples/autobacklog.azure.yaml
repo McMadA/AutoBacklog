@@ -1,0 +1,45 @@
+# AutoBacklog Configuration: Azure DevOps Boards
+project_name: "Thoughts"
+system_prompt_intro: "Je bent Antigravity, de Autonome Senior Engineer voor dit project."
+max_rounds: 1000
+cooldown_seconds: 10
+
+backlog:
+  type: "azure_boards"
+  org_url: "https://dev.azure.com/allardv03"
+  project: "Naam"
+  execution_order:
+    - 184
+    - 217
+    - 219
+    - 178
+    - 218
+    - 174
+    - 175
+  non_executable_ids:
+    - 127
+    - 141
+    - 142
+    - 152
+  include_ideas: false
+
+provider:
+  type: "auto" # 'auto', 'agy' (Google Antigravity), or 'claude' (Anthropic Claude Code)
+  large_model: "gemini-4-argon-high"
+  large_fallback: "claude-opus-5-5-high"
+  small_model: "gemini-3.8-flash-high"
+  small_fallback: "claude-sonnet-5-5-high"
+
+safeguards:
+  create_snapshots: true
+  snapshots_dir: "_snapshots"
+  git_tag_prefix: "checkpoint-night"
+  auto_revert_zero_diff: true
+  quota_cache_file: "_snapshots/model_quota_cache.json"
+
+reporters:
+  dashboard_file: "RUN_SUMMARY.md"
+  stream_console: true
+
+hardware:
+  detect_adb: true

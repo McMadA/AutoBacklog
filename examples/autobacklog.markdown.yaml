@@ -1,0 +1,23 @@
+# AutoBacklog Configuration: Local Markdown Plan
+project_name: "LocalProject"
+system_prompt_intro: "You are an autonomous Senior Software Engineer."
+max_rounds: 500
+cooldown_seconds: 5
+
+backlog:
+  type: "markdown"
+  file_path: "docs/PLAN.md" # or "BACKLOG.md"
+  execution_order: []
+  non_executable_ids: []
+
+provider:
+  type: "auto"
+
+safeguards:
+  create_snapshots: true
+  snapshots_dir: "_snapshots"
+  auto_revert_zero_diff: true
+
+reporters:
+  dashboard_file: "RUN_SUMMARY.md"
+  stream_console: true
